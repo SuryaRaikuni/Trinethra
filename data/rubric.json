@@ -1,0 +1,127 @@
+{
+  "rubric": {
+    "name": "DT Fellow Performance Rubric",
+    "scale": "1-10",
+    "bands": [
+      {
+        "band": "Need Attention",
+        "range": [1, 3],
+        "description": "Not yet productive. The issue is pre-productivity.",
+        "levels": [
+          {
+            "score": 1,
+            "label": "Not Interested",
+            "description": "Shows no interest in work or tasks.",
+            "signals": ["Disengaged", "Does not attempt work", "No visible effort"]
+          },
+          {
+            "score": 2,
+            "label": "Lacks Discipline",
+            "description": "Works only when instructed by a manager; lacks self-initiative.",
+            "signals": ["Waits for instructions", "No self-direction", "Does minimum when told"]
+          },
+          {
+            "score": 3,
+            "label": "Motivated but Directionless",
+            "description": "Highly motivated but doesn't know where or how to focus efforts.",
+            "signals": ["Enthusiastic but unfocused", "Wants to help but doesn't know how", "Energy without direction"]
+          }
+        ]
+      },
+      {
+        "band": "Productivity",
+        "range": [4, 6],
+        "description": "Productive but not yet solving problems or building systems.",
+        "levels": [
+          {
+            "score": 4,
+            "label": "Careless and Inconsistent",
+            "description": "Moderately productive but careless; needs better discipline to improve.",
+            "signals": ["Inconsistent quality", "Sometimes good, sometimes sloppy", "Produces output but unreliable"]
+          },
+          {
+            "score": 5,
+            "label": "Consistent Performer",
+            "description": "Meets required standards, serious about work, and shows consistent productivity, but there's room for improvement.",
+            "signals": ["Reliable", "Does what's asked", "Meets standards", "Doesn't exceed scope"]
+          },
+          {
+            "score": 6,
+            "label": "Reliable and Productive",
+            "description": "Completes all assigned tasks efficiently and shows reliability in delivery.",
+            "signals": ["High trust from supervisor", "Give task and forget", "Efficient execution", "No follow-up needed"]
+          }
+        ]
+      },
+      {
+        "band": "Performance",
+        "range": [7, 10],
+        "description": "Problem identification and systems building. This is where the Fellow mandate lives.",
+        "levels": [
+          {
+            "score": 7,
+            "label": "Problem Identifier",
+            "description": "Productive and consistently identifies problem areas or challenges that need attention.",
+            "signals": ["Spots patterns", "Flags issues proactively", "Notices what others miss", "Expands scope beyond assignments"]
+          },
+          {
+            "score": 8,
+            "label": "Problem Solver",
+            "description": "Identifies problems and proactively suggests creative and practical solutions.",
+            "signals": ["Builds solutions, not just reports", "Proposes and implements fixes", "Creates tools or processes"]
+          },
+          {
+            "score": 9,
+            "label": "Innovative and Experimental",
+            "description": "Actively solves problems, experiments with solutions, and builds models or MVPs to address challenges.",
+            "signals": ["Tests multiple approaches", "Iterates on solutions", "Builds new tools", "Creates things that didn't exist"]
+          },
+          {
+            "score": 10,
+            "label": "Exceptional Performer",
+            "description": "Excels in identifying, solving, and executing solutions flawlessly, delivering extraordinary results that others can learn from.",
+            "signals": ["Flawless execution", "Others learn from their work", "Creates replicable systems", "Organizational impact"]
+          }
+        ]
+      }
+    ],
+    "criticalBoundary": {
+      "boundary": "6 vs 7",
+      "description": "The most important scoring decision. 6 = excellent executor of tasks defined by others. 7 = identifies problems the supervisor hadn't articulated. The difference is initiative direction.",
+      "score6Example": "He does everything I give him. I don't have to follow up. Very reliable.",
+      "score7Example": "She noticed that our rejection rate goes up on Mondays and started tracking why."
+    }
+  },
+  "assessmentDimensions": [
+    {
+      "id": "execution",
+      "label": "Driving Execution",
+      "description": "Getting things done on time, following up without reminders, initiating work"
+    },
+    {
+      "id": "systems_building",
+      "label": "Building Systems",
+      "description": "Creating tools, processes, trackers, SOPs that persist after the Fellow leaves"
+    },
+    {
+      "id": "kpi_impact",
+      "label": "KPI Impact",
+      "description": "Connecting work to measurable business outcomes"
+    },
+    {
+      "id": "change_management",
+      "label": "Change Management",
+      "description": "Getting people to adopt new processes, handling resistance, building rapport"
+    }
+  ],
+  "kpis": [
+    { "id": "lead_generation", "label": "Lead Generation", "description": "New potential customers identified and contacted" },
+    { "id": "lead_conversion", "label": "Lead Conversion", "description": "Percentage of leads that become paying customers" },
+    { "id": "upselling", "label": "Upselling", "description": "Selling more to existing customers" },
+    { "id": "cross_selling", "label": "Cross-selling", "description": "Selling additional products to existing customers" },
+    { "id": "nps", "label": "NPS", "description": "Customer satisfaction and likelihood to recommend" },
+    { "id": "pat", "label": "PAT", "description": "Profit After Tax — bottom-line profitability" },
+    { "id": "tat", "label": "TAT", "description": "Turnaround Time — process completion speed" },
+    { "id": "quality", "label": "Quality", "description": "Defect rates, rejection rates, customer complaints" }
+  ]
+}

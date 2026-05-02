@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Trinethra — Supervisor Feedback Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f0f0f;
+    --surface:   #181818;
+    --surface2:  #202020;
+    --border:    #2a2a2a;
+    --border2:   #333;
+    --text:      #e8e4dc;
+    --text-muted:#888;
+    --text-dim:  #555;
+    --accent:    #c8a96e;      /* warm gold */
+    --accent2:   #8fb8a0;      /* sage green */
+    --danger:    #c46b6b;
+    --warn:      #c8a030;
+    --score-hi:  #8fb8a0;
+    --score-mid: #c8a96e;
+    --score-lo:  #c46b6b;
+    --font-body: 'IBM Plex Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-disp: 'Playfair Display', serif;
+    --radius:    6px;
+    --radius-lg: 10px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ─────────────────────────────────────────────────────────── */
+  .app {
+    display: grid;
+    grid-template-rows: 56px 1fr;
+    grid-template-columns: 420px 1fr;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────────── */
+  .header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    gap: 16px;
+  }
+  .header-logo {
+    font-family: var(--font-disp);
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .header-dot { width: 1px; height: 18px; background: var(--border2); margin: 0 4px; }
+  .header-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim);
+    transition: background 0.3s;
+  }
+  .status-dot.ok { background: var(--accent2); }
+  .status-dot.err { background: var(--danger); }
+
+  /* ── Left Panel (Input) ─────────────────────────────────────────────── */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+  }
+  .panel-section {
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Samples */
+  .samples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sample-btn {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .sample-btn:hover { border-color: var(--accent); background: #222; }
+  .sample-name {
+    font-weight: 500;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .sample-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .sample-range {
+    display: inline-block;
+    background: var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 4px;
+    color: var(--accent);
+  }
+
+  /* Transcript input */
+  .transcript-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+  }
+  .transcript-label {
+    padding: 12px 20px 8px;
+  }
+  #transcriptInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    padding: 0 20px 16px;
+    resize: none;
+    overflow-y: auto;
+  }
+  #transcriptInput::placeholder { color: var(--text-dim); }
+  #transcriptInput::-webkit-scrollbar { width: 4px; }
+  #transcriptInput::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Model + Run */
+  .run-bar {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .model-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+  }
+  .model-select:focus { border-color: var(--accent); }
+  #runBtn {
+    flex: 1;
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: var(--radius);
+    padding: 9px 20px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  #runBtn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+  #runBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── Right Panel (Output) ────────────────────────────────────────────── */
+  .panel-right {
+    overflow-y: auto;
+    padding: 20px 24px 40px;
+    background: var(--bg);
+  }
+  .panel-right::-webkit-scrollbar { width: 4px; }
+  .panel-right::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* Draft banner */
+  .draft-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1a1600;
+    border: 1px solid #3a3000;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: var(--warn);
+  }
+  .draft-banner svg { flex-shrink: 0; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .empty-icon { font-size: 40px; opacity: 0.3; }
+  .empty-text { font-size: 13px; max-width: 260px; line-height: 1.6; }
+
+  /* Loading */
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+
+  /* ── Score Card ─────────────────────────────────────────────────────── */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px 20px;
+    align-items: start;
+  }
+  .score-number {
+    font-family: var(--font-disp);
+    font-size: 56px;
+    line-height: 1;
+    text-align: center;
+    font-weight: 700;
+  }
+  .score-meta { display: flex; flex-direction: column; gap: 4px; }
+  .score-label { font-size: 18px; font-weight: 600; }
+  .score-band {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .score-confidence {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    color: var(--text-muted);
+    width: fit-content;
+    margin-top: 4px;
+  }
+  .score-justification {
+    grid-column: 1 / -1;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #c8c4bc;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .score-hi { color: var(--score-hi); }
+  .score-mid { color: var(--score-mid); }
+  .score-lo { color: var(--score-lo); }
+
+  /* Bias flags */
+  .bias-flags { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .bias-flag {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    background: #1a0f0f;
+    border: 1px solid #3a1f1f;
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #c8906e;
+  }
+
+  /* ── Section ─────────────────────────────────────────────────────────── */
+  .section { margin-bottom: 20px; }
+  .section-header {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .section-count {
+    background: var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  /* ── Evidence Cards ─────────────────────────────────────────────────── */
+  .evidence-list { display: flex; flex-direction: column; gap: 8px; }
+  .evidence-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .evidence-card.positive { border-left-color: var(--score-hi); }
+  .evidence-card.negative { border-left-color: var(--danger); }
+  .evidence-card.neutral  { border-left-color: var(--text-dim); }
+  .evidence-quote {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  .evidence-quote::before { content: '"'; }
+  .evidence-quote::after  { content: '"'; }
+  .evidence-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text-muted);
+  }
+  .tag.positive { color: var(--score-hi); border-color: #2a4a38; background: #101a13; }
+  .tag.negative { color: var(--danger);   border-color: #4a2828; background: #1a1010; }
+  .tag.neutral  { color: var(--text-muted); }
+  .tag.dim-tag  { color: var(--accent); border-color: #3a2e18; background: #1a1608; }
+  .evidence-interpretation {
+    font-size: 12px;
+    color: #a09890;
+    line-height: 1.55;
+  }
+
+  /* ── KPI Grid ─────────────────────────────────────────────────────────── */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+  }
+  .kpi-name { font-weight: 600; font-size: 12px; margin-bottom: 4px; color: var(--accent2); }
+  .kpi-evidence { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 6px; }
+  .kpi-type {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+  }
+  .kpi-type.system { color: var(--score-hi); border-color: #2a4a38; background: #101a13; }
+  .kpi-type.personal { color: var(--warn); border-color: #3a3000; background: #1a1600; }
+
+  /* ── Gaps ────────────────────────────────────────────────────────────── */
+  .gaps-list { display: flex; flex-direction: column; gap: 8px; }
+  .gap-card {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+  }
+  .gap-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+  .gap-dim {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--danger);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+  }
+  .gap-detail { font-size: 12px; color: #a09890; line-height: 1.55; }
+
+  /* ── Follow-up Questions ─────────────────────────────────────────────── */
+  .questions-list { display: flex; flex-direction: column; gap: 10px; }
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .question-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .question-text { font-size: 13px; font-weight: 500; margin-bottom: 6px; line-height: 1.5; }
+  .question-gap {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+  .question-looking { font-size: 11px; color: #7a7870; line-height: 1.5; }
+
+  /* ── Error ──────────────────────────────────────────────────────────── */
+  .error-card {
+    background: #1a0f0f;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius-lg);
+    padding: 16px 20px;
+  }
+  .error-title { font-weight: 600; color: var(--danger); margin-bottom: 6px; }
+  .error-msg { font-size: 12px; color: #c09090; font-family: var(--font-mono); }
+
+  /* ── Util ────────────────────────────────────────────────────────────── */
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <span class="header-logo">Trinethra</span>
+    <div class="header-dot"></div>
+    <span class="header-sub">Supervisor Feedback Analyzer</span>
+    <div class="header-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">checking ollama…</span>
+    </div>
+  </header>
+
+  <!-- Left Panel -->
+  <aside class="panel-left">
+
+    <!-- Sample Transcripts -->
+    <div class="panel-section">
+      <div class="panel-label">Sample Transcripts</div>
+      <div class="samples-list" id="samplesList">
+        <div style="font-size:11px;color:var(--text-dim);">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Transcript Input -->
+    <div class="transcript-wrap">
+      <div class="panel-label transcript-label">Transcript</div>
+      <textarea id="transcriptInput" placeholder="Paste the supervisor call transcript here…"></textarea>
+    </div>
+
+    <!-- Run Bar -->
+    <div class="run-bar">
+      <select class="model-select" id="modelSelect">
+        <option value="llama3.2">llama3.2</option>
+        <option value="mistral">mistral</option>
+        <option value="phi3">phi3</option>
+        <option value="gemma">gemma</option>
+        <option value="llama3">llama3</option>
+      </select>
+      <button id="runBtn" onclick="runAnalysis()">Run Analysis</button>
+    </div>
+  </aside>
+
+  <!-- Right Panel -->
+  <main class="panel-right" id="outputPanel">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">◈</div>
+      <div class="empty-text">Paste a supervisor transcript and click <strong>Run Analysis</strong> to generate an AI assessment draft.</div>
+    </div>
+
+    <div class="loading-state hidden" id="loadingState">
+      <div class="spinner"></div>
+      <div class="loading-text">Analyzing transcript…</div>
+    </div>
+
+    <div id="resultArea" class="hidden"></div>
+  </main>
+
+</div>
+
+<script>
+const API = '';  // same origin
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  await checkOllama();
+  await loadSamples();
+}
+
+async function checkOllama() {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  try {
+    const res = await fetch(`${API}/model-check`);
+    const data = await res.json();
+    if (data.ollama_running) {
+      dot.className = 'status-dot ok';
+      txt.textContent = `ollama running · ${data.models.length} model(s)`;
+      // populate model select with available models
+      if (data.models.length > 0) {
+        const sel = document.getElementById('modelSelect');
+        sel.innerHTML = data.models.map(m =>
+          `<option value="${m}">${m}</option>`
+        ).join('');
+      }
+    } else {
+      dot.className = 'status-dot err';
+      txt.textContent = 'ollama not running';
+    }
+  } catch {
+    dot.className = 'status-dot err';
+    txt.textContent = 'backend not reachable';
+  }
+}
+
+async function loadSamples() {
+  const list = document.getElementById('samplesList');
+  try {
+    const res = await fetch(`${API}/samples`);
+    const samples = await res.json();
+    list.innerHTML = samples.map(s => `
+      <button class="sample-btn" onclick="loadSample(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+        <div class="sample-name">${s.fellowName}</div>
+        <div class="sample-meta">${s.company}
+          ${s.expectedScoreRange.length ? `<span class="sample-range">expected ${s.expectedScoreRange[0]}–${s.expectedScoreRange[1]}</span>` : ''}
+        </div>
+      </button>
+    `).join('');
+  } catch {
+    list.innerHTML = '<div style="font-size:11px;color:var(--text-dim);">Could not load samples</div>';
+  }
+}
+
+function loadSample(sample) {
+  document.getElementById('transcriptInput').value = sample.transcript;
+}
+
+// ── Run Analysis ─────────────────────────────────────────────────────────
+async function runAnalysis() {
+  const transcript = document.getElementById('transcriptInput').value.trim();
+  if (!transcript) {
+    alert('Please paste a transcript first.');
+    return;
+  }
+
+  const model = document.getElementById('modelSelect').value;
+  const btn = document.getElementById('runBtn');
+
+  // Show loading
+  btn.disabled = true;
+  btn.textContent = 'Analyzing…';
+  document.getElementById('emptyState').classList.add('hidden');
+  document.getElementById('resultArea').classList.add('hidden');
+  document.getElementById('loadingState').classList.remove('hidden');
+
+  try {
+    const res = await fetch(`${API}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript, model })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      renderError(data.detail || 'Unknown error');
+      return;
+    }
+
+    if (data.analysis.error) {
+      renderError(data.analysis.message, data.analysis.raw);
+      return;
+    }
+
+    renderAnalysis(data.analysis);
+
+  } catch (err) {
+    renderError('Network error: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run Analysis';
+    document.getElementById('loadingState').classList.add('hidden');
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderAnalysis(a) {
+  const score = a.score;
+  const scoreColor = score.value >= 7 ? 'score-hi' : score.value >= 4 ? 'score-mid' : 'score-lo';
+
+  let html = `
+    <!-- Draft Banner -->
+    <div class="draft-banner">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1L1 14h14L8 1z" stroke="#c8a030" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M8 6v4M8 11.5v1" stroke="#c8a030" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span><strong>AI Draft</strong> — Review each finding before finalizing. Accept, edit, or reject based on your own judgment. The AI may be wrong.</span>
+    </div>
+
+    <!-- Score Card -->
+    <div class="score-card">
+      <div class="score-number ${scoreColor}">${score.value}</div>
+      <div class="score-meta">
+        <div class="score-label">${esc(score.label)}</div>
+        <div class="score-band">${esc(score.band)}</div>
+        <div class="score-confidence">
+          <span>Confidence:</span>
+          <span style="color:${score.confidence === 'high' ? 'var(--score-hi)' : score.confidence === 'low' ? 'var(--danger)' : 'var(--warn)'}">${score.confidence}</span>
+        </div>
+      </div>
+      <div class="score-justification">${esc(score.justification)}</div>
+    </div>
+  `;
+
+  // Bias Flags
+  if (a.biasFlags && a.biasFlags.length > 0) {
+    html += `<div class="bias-flags">`;
+    a.biasFlags.forEach(flag => {
+      html += `<div class="bias-flag">⚠ ${esc(flag)}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Evidence
+  if (a.evidence && a.evidence.length > 0) {
+    html += `
+      <div class="section">
+        <div class="section-header">Extracted Evidence <span class="section-count">${a.evidence.length}</span></div>
+        <div class="evidence-list">
+    `;
+    a.evidence.forEach(e => {
+      html += `
+        <div class="evidence-card ${e.signal}">
+          <div class="evidence-quote">${esc(e.quote)}</div>
+          <div class="evidence-meta">
+            <span class="tag ${e.signal}">${e.signal}</span>
+            <span class="tag dim-tag">${esc(e.dimension?.replace(/_/g, ' '))}</span>
+          </div>
+          <div class="evidence-interpretation">${esc(e.interpretation)}</div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  }
+
+  // KPI Mapping
+  if (a.kpiMapping && a.kpiMapping.length > 0) {
+    html += `
+      <div class="section">
+        <div class="section-header">KPI Mapping <span class="section-count">${a.kpiMapping.length}</span></div>
+        <div class="kpi-grid">
+    `;
+    a.kpiMapping.forEach(k => {
+      html += `
+        <div class="kpi-card">
+          <div class="kpi-name">${esc(k.kpi)}</div>
+          <div class="kpi-evidence">${esc(k.evidence)}</div>
+          <span class="kpi-type ${k.systemOrPersonal}">${k.systemOrPersonal === 'system' ? '⬡ System' : '◎ Personal'}</span>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  }
+
+  // Gaps
+  if (a.gaps && a.gaps.length > 0) {
+    html += `
+      <div class="section">
+        <div class="section-header">Coverage Gaps <span class="section-count">${a.gaps.length}</span></div>
+        <div class="gaps-list">
+    `;
+    a.gaps.forEach(g => {
+      html += `
+        <div class="gap-card">
+          <div class="gap-icon">✕</div>
+          <div>
+            <div class="gap-dim">${esc(g.dimension?.replace(/_/g, ' '))}</div>
+            <div class="gap-detail">${esc(g.detail)}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  }
+
+  // Follow-up Questions
+  if (a.followUpQuestions && a.followUpQuestions.length > 0) {
+    html += `
+      <div class="section">
+        <div class="section-header">Follow-up Questions <span class="section-count">${a.followUpQuestions.length}</span></div>
+        <div class="questions-list">
+    `;
+    a.followUpQuestions.forEach((q, i) => {
+      html += `
+        <div class="question-card">
+          <div class="question-num">Q${i + 1}</div>
+          <div class="question-text">${esc(q.question)}</div>
+          <div class="question-gap">Target gap: ${esc(q.targetGap?.replace(/_/g, ' '))}</div>
+          <div class="question-looking">Looking for: ${esc(q.lookingFor)}</div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  }
+
+  const resultArea = document.getElementById('resultArea');
+  resultArea.innerHTML = html;
+  resultArea.classList.remove('hidden');
+}
+
+function renderError(msg, raw) {
+  const html = `
+    <div class="error-card">
+      <div class="error-title">Analysis Failed</div>
+      <div class="error-msg">${esc(msg)}</div>
+      ${raw ? `<div class="error-msg" style="margin-top:8px;opacity:0.6;">Model output (first 500 chars):<br>${esc(raw)}</div>` : ''}
+    </div>
+  `;
+  const resultArea = document.getElementById('resultArea');
+  resultArea.innerHTML = html;
+  resultArea.classList.remove('hidden');
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
