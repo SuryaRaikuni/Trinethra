@@ -161,7 +161,7 @@ trinethra/
 
 ## Assumptions Made
 
-- Intern is running this on a laptop with at least 8 GB RAM
-- Ollama is already installed (per assignment guidelines)
+- Running this on a laptop with at least 8 GB RAM
+- Ollama is already installed 
 - The tool is for internal use only — no auth, no rate limiting
-- "Clean and functional" UI is the target, not visual polish (per assignment spec)
+- "Clean and functional" UI is the target, not visual polish 
